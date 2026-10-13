@@ -1,4 +1,4 @@
-Always run a full `bundle exec rspec` and `bundle exec rubocop -A` and fix all errors before committing.
+Before publication, run the full RSpec suite and non-mutating RuboCop in the isolated environment described in `docs/DEVELOPMENT.md`; report blockers explicitly.
 
 # legion-data
 
@@ -20,5 +20,9 @@ It also ships a parallel local SQLite database (`Legion::Data::Local`) for on-no
 cd /path/to/legion-data
 bundle install
 bundle exec rspec
-bundle exec rubocop -A
+bundle exec rubocop
 ```
+
+## Fork-local workflow
+
+Read [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for canonical validation boundaries and the repository-specific helper. Use the `review-legion-migrations` skill in `.agents/skills/` for this review workflow.
