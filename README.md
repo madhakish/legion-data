@@ -2,7 +2,7 @@
 
 Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (71 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.6.25 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+**Version**: see [`version.rb`](lib/legion/data/version.rb) | **Ruby**: >= 3.4 | **License**: Apache-2.0
 
 ---
 
@@ -88,7 +88,7 @@ Legion::Data (singleton module)
 1. **Shared DB** (SQLite / MySQL / PostgreSQL) — control plane data: extensions, tasks, runners, nodes, settings, audit logs, relationships. Shared across the cluster.
 2. **Local DB** (always SQLite) — agentic cognitive state: memory traces, trust scores, dream journals. On-node only; no cross-database joins.
 
-Deleting `legionio_local.db` provides cryptographic erasure — no residual data.
+Deleting `legionio_local.db` alone is not cryptographic erasure: SQLite WAL files, backups and filesystem copies may retain data. Do not delete live state as part of development validation.
 
 ---
 
@@ -394,21 +394,13 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 | 058–067 | Audit records, chains, knowledge tiers, tool embedding cache, identity system (providers, principals, identities, groups) |
 | 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
 
-Run migrations standalone:
-
-```bash
-bundle exec legionio_migrate
-```
+For offline development, audit migration filenames with `python3 scripts/audit_migrations.py`. Executing migrations through `Legion::Data::Migration` changes a database; use only a disposable test database after reviewing the setup settings.
 
 ---
 
 ## CLI Executable
 
-`exe/legionio_migrate` runs database migrations standalone, outside the full LegionIO service:
-
-```bash
-bundle exec legionio_migrate
-```
+`exe/legionio_migrate` is an empty placeholder at this fork snapshot, not a working standalone migration command. Do not rely on it to apply or validate a schema.
 
 ---
 
@@ -434,12 +426,14 @@ bundle exec legionio_migrate
 
 ## Contributing
 
+The spec helper loads settings and calls `Legion::Data.setup`, which can connect and migrate. Prepare disposable settings/databases before running these commands; see [the fork development guide](docs/DEVELOPMENT.md).
+
 ```bash
 git clone https://github.com/LegionIO/legion-data
 cd legion-data
 bundle install
 bundle exec rspec        # all tests must pass
-bundle exec rubocop -A   # zero offenses expected
+bundle exec rubocop      # non-mutating lint
 ```
 
 Follow the [LegionIO contribution guide](https://github.com/LegionIO/.github/blob/main/CONTRIBUTING.md). Open a PR against `main`.
@@ -447,3 +441,7 @@ Follow the [LegionIO contribution guide](https://github.com/LegionIO/.github/blo
 ---
 
 **Maintained by**: Matthew Iverson ([@Esity](https://github.com/Esity))
+
+## Developing this fork
+
+See [the fork development guide](docs/DEVELOPMENT.md) for the source/spec map, an offline migration-sequence audit, safe validation boundaries and proposed self-hosted CI improvements. Agent entry points are [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). Helpers do not start Legion or access live services.

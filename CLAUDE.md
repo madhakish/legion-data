@@ -1,16 +1,17 @@
-Always run a full `bundle exec rspec` and `bundle exec rubocop -A` and fix all errors before committing.
+Before publication, run full RSpec and non-mutating RuboCop under the isolation guidance in `docs/DEVELOPMENT.md`; report blockers explicitly.
 
 # legion-data: Persistent Storage for LegionIO
 
-**Repository Level 3 Documentation**
-- **Parent**: `/Users/miverso2/rubymine/legion/CLAUDE.md`
+**Repository architecture reference**
+
+For standalone fork development, read [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); no parent-workspace path is required.
 
 ## Purpose
 
 Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
-**Version**: 1.6.21
+**Version**: see `lib/legion/data/version.rb`
 **License**: Apache-2.0
 
 ## Supported Databases
@@ -58,7 +59,7 @@ Legion::Data (singleton module)
 │   ├── .shutdown      # Close local connection
 │   └── .reset!        # Clear all state (testing)
 │
-├── Migration          # Auto-migration system (58 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (Sequel DSL; inspect migrations/ for current IDs)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -159,8 +160,8 @@ Legion::Data (singleton module)
 - **Sequel ORM**: Shared models are `Sequel::Model` subclasses (inherit global connection). Local models use `Legion::Data::Local.model(:table)` (explicit connection binding).
 - **Two-Tier Caching**: StaticCache (in-process frozen hash, no external deps) for lookup models (Extension, Runner, Function) + external Caching plugin (via `Legion::Cache` — Redis/Memcached/Memory) for dynamic models (Relationship, Node, Setting). Both disabled by default.
 - **Query Log Isolation**: `query_log` flag pipes all SQL to dedicated files (`~/.legionio/logs/data-shared-query.log`, `data-local-query.log`) via `QueryFileLogger` — completely isolated from the `Legion::Logging` domain
-- **Cryptographic Erasure**: Deleting `legionio_local.db` is a hard guarantee — no residual data. Used by `lex-privatecore`.
-- **CLI Executable**: Ships with `legionio_migrate` executable in `exe/` for running database migrations standalone
+- **Local data deletion**: Removing the SQLite file is not a cryptographic-erasure guarantee; WAL files, backups and filesystem copies may retain data. Do not delete live state during development.
+- **CLI placeholder**: `exe/legionio_migrate` is empty at this fork snapshot; use the tested library migration path only against a disposable database.
 
 ## Default Settings
 
@@ -282,7 +283,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 58 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | Numbered shared migration files (Sequel DSL; use the offline sequence audit) |
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog, AuditLog, RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant) |
@@ -303,7 +304,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/retention.rb` | Audit retention and archival lifecycle |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
-| `exe/legionio_migrate` | CLI executable for running database migrations standalone |
+| `exe/legionio_migrate` | Empty CLI placeholder at this fork snapshot |
 
 ## Role in LegionIO
 
